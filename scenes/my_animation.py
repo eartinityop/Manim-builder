@@ -5,10 +5,10 @@ class HeartEquation(Scene):
     def construct(self):
         # 1. Setup Axes
         axes = Axes(
-            x_range=[-2.5, 3.5, 1],
+            x_range=[-3.5, 3.5, 1],
             y_range=[-2.5, 3.5, 1],
             x_length=9,
-            y_length=9,
+            y_length=8,
             axis_config={"include_numbers": False}
         ).scale(0.8).shift(UP * 1.2)
 
