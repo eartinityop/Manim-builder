@@ -67,7 +67,7 @@ jobs:
             -u "$(id -u):$(id -g)" \
             -v "$GITHUB_WORKSPACE:/manim" \
             manimcommunity/manim:stable \
-            manim -ql "/manim/${SCRIPT}" "$SCENE" -o "/manim/rendered.mp4"
+            manim -qh --fps 60 -o "/manim/rendered.mp4" "/manim/${SCRIPT}" "$SCENE"
 
           if [ ! -f rendered.mp4 ]; then
             echo "::error::Rendering failed – rendered.mp4 not found"
