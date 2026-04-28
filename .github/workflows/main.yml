@@ -7,12 +7,12 @@ on:
         description: 'Path to the Manim script (e.g. scenes/my_scene.py)'
         required: true
         type: string
+        default: 'scenes/my_animation.py'
 
       scene:
         description: 'Scene class name (leave empty to auto-detect)'
         required: false
         type: string
-        default: 'scenes/my_animation.py'
 
       release_name:
         description: 'Release name (display name)'
