@@ -71,7 +71,7 @@ jobs:
           # If Instagram Reel is enabled, inject portrait resolution config
           if [ "${{ github.event.inputs.instagram_reel }}" == "true" ]; then
             TEMP_SCRIPT="_manim_temp.py"
-            echo "from manim import config; config.frame_size = (700,1000); config.frame_width = 10" > "$TEMP_SCRIPT"
+            echo "from manim import config; config.frame_size = (700,1000); config.frame_width = 15" > "$TEMP_SCRIPT"
             cat "$SCRIPT" >> "$TEMP_SCRIPT"
             SCRIPT="$TEMP_SCRIPT"
             echo "Instagram Reel mode: 9:16 portrait resolution applied."
