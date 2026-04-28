@@ -1,35 +1,26 @@
 name: Render Manim Animation
 
-# This workflow lets you render a Manim animation from a Python script
-# directly in your repository using the official Manim community Docker image.
-# The rendered video is automatically uploaded as a GitHub Release asset.
-
 on:
   workflow_dispatch:
     inputs:
-      # The path (relative to the repository root) of the Manim Python script.
-      # Example: scenes/my_scene.py
       script:
         description: 'Path to the Manim script (e.g. scenes/my_scene.py)'
         required: true
         type: string
 
-      # Optional: specify the Scene class name to render.
-      # If left empty, the workflow will try to auto-detect it.
       scene:
         description: 'Scene class name (leave empty to auto-detect)'
         required: false
         type: string
-        default: ''
+        default: 'scenes/my_animation.py'
 
-      # The display name of the GitHub Release that will hold the rendered video.
       release_name:
         description: 'Release name (display name)'
         required: true
         type: string
 
 permissions:
-  contents: write  # needed for creating releases and uploading assets
+  contents: write
 
 jobs:
   render-and-release:
@@ -47,9 +38,8 @@ jobs:
             echo "::error::Script file not found: $SCRIPT"
             exit 1
           fi
-          # Extract the first class that inherits from Scene.
-          # Pattern: class SomeName(... Scene ...)
-          SCENE=$(grep -oP 'class\s+(\w+)\s*\(\s*Scene\s*\)' "$SCRIPT" | head -1 | sed -E 's/class\s+(\w+)\s*\(.*/\1/')
+          # Match classes like: class MyScene(Scene), class MyScene(ThreeDScene), class MyScene(Scene, ZoomedScene), etc.
+          SCENE=$(grep -oP 'class\s+(\w+)\s*\(.*Scene.*\)' "$SCRIPT" | head -1 | sed -E 's/class\s+(\w+)\s*\(.*/\1/')
           if [ -z "$SCENE" ]; then
             echo "::error::Could not auto-detect a Scene class in $SCRIPT"
             exit 1
@@ -73,16 +63,12 @@ jobs:
           echo "Rendering scene '$SCENE' from '$SCRIPT'"
 
           # Run the official Manim community Docker image.
-          # - Mount the repository root at /manim inside the container.
-          # - Run as the host user to avoid permission problems.
-          # - Output a single mp4 file named 'rendered.mp4' in the workspace root.
           docker run --rm \
             -u "$(id -u):$(id -g)" \
             -v "$GITHUB_WORKSPACE:/manim" \
             manimcommunity/manim:stable \
-            -ql "/manim/${SCRIPT}" "$SCENE" -o "/manim/rendered.mp4"
+            manim -ql "/manim/${SCRIPT}" "$SCENE" -o "/manim/rendered.mp4"
 
-          # Verify that the output file exists
           if [ ! -f rendered.mp4 ]; then
             echo "::error::Rendering failed – rendered.mp4 not found"
             exit 1
@@ -92,7 +78,6 @@ jobs:
       - name: Upload video to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          # Create a unique tag based on the run ID and attempt number.
           tag_name: manim-${{ github.run_id }}-${{ github.run_attempt }}
           name: ${{ github.event.inputs.release_name }}
           files: rendered.mp4
