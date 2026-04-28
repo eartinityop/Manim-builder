@@ -5,10 +5,10 @@ class HeartEquation(Scene):
     def construct(self):
         # 1. Setup Axes
         axes = Axes(
-            x_range=[-2, 2, 1],
-            y_range=[-2, 2, 1],
-            x_length=7,
-            y_length=7,
+            x_range=[-2.5, 3.5, 1],
+            y_range=[-2.5, 3.5, 1],
+            x_length=9,
+            y_length=9,
             axis_config={"include_numbers": False}
         ).scale(0.8).shift(UP * 1.2)
 
@@ -64,3 +64,9 @@ class HeartEquation(Scene):
 
         self.play(Write(credits))
         self.wait(2)
+
+        # Fade everything at the end
+        self.play(
+            FadeOut(credit_1),
+            FadeOut(credit_2)
+        )
