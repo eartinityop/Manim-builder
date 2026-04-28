@@ -13,11 +13,19 @@ on:
         description: 'Scene class name (leave empty to auto-detect)'
         required: false
         type: string
+        default: ''
 
       release_name:
         description: 'Release name (display name)'
         required: true
         type: string
+
+      # ✨ New input for Instagram reel (9:16 portrait)
+      instagram_reel:
+        description: 'Render as Instagram Reel (9:16 portrait)'
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -38,7 +46,6 @@ jobs:
             echo "::error::Script file not found: $SCRIPT"
             exit 1
           fi
-          # Match classes like: class MyScene(Scene), class MyScene(ThreeDScene), class MyScene(Scene, ZoomedScene), etc.
           SCENE=$(grep -oP 'class\s+(\w+)\s*\(.*Scene.*\)' "$SCRIPT" | head -1 | sed -E 's/class\s+(\w+)\s*\(.*/\1/')
           if [ -z "$SCENE" ]; then
             echo "::error::Could not auto-detect a Scene class in $SCRIPT"
@@ -60,14 +67,26 @@ jobs:
         run: |
           SCRIPT="${{ github.event.inputs.script }}"
           SCENE="${{ steps.scene_name.outputs.scene }}"
-          echo "Rendering scene '$SCENE' from '$SCRIPT'"
 
-          # Run the official Manim community Docker image.
+          # If Instagram Reel is enabled, inject portrait resolution config
+          if [ "${{ github.event.inputs.instagram_reel }}" == "true" ]; then
+            TEMP_SCRIPT="_manim_temp.py"
+            echo "from manim import config; config.frame_width = 9; config.frame_height = 16" > "$TEMP_SCRIPT"
+            cat "$SCRIPT" >> "$TEMP_SCRIPT"
+            SCRIPT="$TEMP_SCRIPT"
+            echo "Instagram Reel mode: 9:16 portrait resolution applied."
+          fi
+
+          echo "Rendering scene '$SCENE' from '$SCRIPT' at 1080p 60fps"
+
           docker run --rm \
             -u "$(id -u):$(id -g)" \
             -v "$GITHUB_WORKSPACE:/manim" \
             manimcommunity/manim:stable \
             manim -qh --fps 60 -o "/manim/rendered.mp4" "/manim/${SCRIPT}" "$SCENE"
+
+          # Clean up temporary script if it was created
+          [ -f "_manim_temp.py" ] && rm -f "_manim_temp.py"
 
           if [ ! -f rendered.mp4 ]; then
             echo "::error::Rendering failed – rendered.mp4 not found"
